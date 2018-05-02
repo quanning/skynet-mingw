@@ -1,9 +1,10 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include "sys/socket.h"
 #include <unistd.h>
 #include <stdbool.h>
-#include "sys/socket.h"
+#include <time.h>
 
 #define HAVE_STRUCT_TIMESPEC
 
@@ -18,13 +19,15 @@ struct sigaction {
 enum { SIGPIPE };
 
 int sigfillset(sigset_t *set);
+int sigemptyset(sigset_t *set);
 int sigaction(int sig, const struct sigaction *act, struct sigaction *oact);
 /*<signal.h>*/
 
 char *strsep(char **stringp, const char *delim);
 
 enum { CLOCK_THREAD_CPUTIME_ID, CLOCK_REALTIME, CLOCK_MONOTONIC };
-int clock_gettime(int what, struct timespec *ti);
+#define clock_gettime clock_gettime_platform
+int clock_gettime_platform(int what, struct timespec *ti);
 
 enum { LOCK_EX, LOCK_NB };
 
@@ -52,6 +55,7 @@ struct event {
 	void * s;
 	bool read;
 	bool write;
+	bool error;
 };
 
 bool sp_invalid(poll_fd fd);

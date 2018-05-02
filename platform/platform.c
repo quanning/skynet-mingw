@@ -1,24 +1,43 @@
+/****************************************************************************
+Copyright (c) 2015-2017      dpull.com
+http://www.dpull.com
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+****************************************************************************/
+
 #include "platform.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <windows.h>
-#include <ws2tcpip.h>
+#include <Windows.h>
+#include <WS2tcpip.h>
 #include <errno.h>
 #include <fcntl.h>
+#include "epoll.h"
 
 #define IN6ADDRSZ 16 
 #define INT16SZ 2
 
-BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call,  LPVOID lpReserved) {
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call,  LPVOID lpReserved) {
   switch (ul_reason_for_call) {
-  case DLL_PROCESS_ATTACH: {
-    WSADATA wsadata;
-    WSAStartup(MAKEWORD(2, 2), &wsadata);
-  }
-  break;
+  case DLL_PROCESS_ATTACH: 
+    epoll_startup();
+    break;
 
   case DLL_PROCESS_DETACH:
-    WSACleanup();
+    epoll_cleanup();
     break;
   }
   return TRUE;
@@ -53,12 +72,17 @@ int sigfillset(sigset_t *set) {
   return 0;  
 }
 
+int sigemptyset(sigset_t *set) {
+  /*Not implemented*/
+  return 0;  
+}
+
 int sigaction(int sig, const struct sigaction *act, struct sigaction *oact) {
   /*Not implemented*/
   return 0;
 }
 
-int clock_gettime(int what, struct timespec *ti) {
+int clock_gettime_platform(int what, struct timespec *ti) {
    __int64 wintime; 
    GetSystemTimeAsFileTime((FILETIME*)&wintime);
    wintime      -=116444736000000000;  //1jan1601 to 1jan1970
